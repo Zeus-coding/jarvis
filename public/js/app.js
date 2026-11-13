@@ -459,8 +459,18 @@ async function boot() {
   try {
     await load();
     if (!app.setup.brain) setup.open();
-  } catch { diag("dNote", "server non raggiungibile"); $("#gateText").textContent = "JARVIS NON RAGGIUNGIBILE"; }
-  fetch("/api/voice/health").then((r) => r.json()).then((h) => diag("dVoice", h.elevenlabs ? "ELEVENLABS" : h.tts ? `NEURALE GRATUITA${h.whisper ? " + WHISPER" : ""}` : "BROWSER")).catch(() => {});
+  } catch {
+    // server spento o in riavvio: si riprova da soli ogni 3 secondi, finché risponde
+    diag("dNote", "server non raggiungibile");
+    $("#gateText").textContent = "JARVIS NON RAGGIUNGIBILE · RIPROVO…";
+    setTimeout(boot, 3000);
+    return;
+  }
+  $("#gateText").textContent = "TOCCA PER INIZIARE";
+  fetch("/api/voice/health").then((r) => r.json()).then((h) => {
+    listener.whisperAvailable = Boolean(h.whisper); // senza Whisper l'ascolto del browser non si arrende mai
+    diag("dVoice", h.elevenlabs ? "ELEVENLABS" : h.tts ? `NEURALE GRATUITA${h.whisper ? " + WHISPER" : ""}` : "BROWSER");
+  }).catch(() => {});
 }
 async function start() {
   $("#gate").classList.add("hide");

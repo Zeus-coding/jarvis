@@ -196,21 +196,30 @@ export class Listener {
       }
       if (interim.trim()) this.onInterim?.(interim.trim(), { echo: this.muted });
     };
+    let retryDelay = 150;
     rec.onerror = (e) => {
       this.onEvent?.(`errore riconoscimento: ${e.error}${e.message ? ` (${e.message})` : ""}`);
       if (e.error === "no-speech" || e.error === "aborted") return;
       if (e.error === "not-allowed") { this.blocked = true; this.onError?.("microfono bloccato"); return; }
-      this.onError?.(`riconoscimento vocale: ${e.error}`);
-      if (["network", "service-not-allowed", "language-not-supported", "audio-capture"].includes(e.error) && ++failures >= 2) {
+      if (!["network", "service-not-allowed", "language-not-supported", "audio-capture"].includes(e.error)) return this.onError?.(`riconoscimento vocale: ${e.error}`);
+      failures++;
+      // il servizio di riconoscimento è online (Google o Microsoft): un errore di rete di solito passa da solo.
+      // Si passa a Whisper solo se è installato; altrimenti si riprova, aspettando un po' di più ogni volta.
+      if (failures >= 2 && this.whisperAvailable) {
         this.rec = null;
+        this.onError?.("riconoscimento del browser non disponibile: uso Whisper");
         this.#openMic().then(() => this.#whisper()).catch((err) => this.onError?.(`microfono: ${err.message}`));
+        return;
       }
+      retryDelay = Math.min(10_000, 1000 * 2 ** Math.min(failures - 1, 4));
+      this.onError?.(e.error === "network" ? `riconoscimento vocale: problema di rete, riprovo tra ${Math.round(retryDelay / 1000)} s` : `riconoscimento vocale: ${e.error}`);
     };
+    rec.onresult = ((handle) => (e) => { retryDelay = 150; handle(e); })(rec.onresult); // appena torna a sentire, ripartenze immediate
     rec.onend = () => {
       this.onEvent?.("riconoscimento fermato");
       this.running = false;
       this.hearing = false;
-      if (this.rec === rec && !this.paused && !this.blocked) setTimeout(() => this.#restart(), 150);
+      if (this.rec === rec && !this.paused && !this.blocked) setTimeout(() => this.#restart(), retryDelay);
     };
     this.#restart();
   }
