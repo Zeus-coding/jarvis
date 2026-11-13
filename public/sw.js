@@ -1,6 +1,6 @@
 // Service worker di J.A.R.V.I.S.: notifiche push (anche a app chiusa) e caricamento rapido dei file dell'interfaccia.
 // Le API non vengono mai salvate in cache: i dati arrivano sempre freschi dal server.
-const CACHE = "jarvis-v1";
+const CACHE = "jarvis-v2";
 const SHELL = ["/", "/giornata", "/lezione", "/css/hud.css", "/js/app.js", "/js/orb.js", "/js/voice.js", "/js/replies.js", "/js/api.js", "/js/pwa.js", "/js/setup.js", "/fonts/inter-latin.woff2", "/icons/icon-192.png"];
 
 self.addEventListener("install", (e) => {
@@ -21,7 +21,7 @@ self.addEventListener("fetch", (e) => {
         return res;
       })
       .catch(async () => (await caches.match(e.request)) || new Response(
-        `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><body style="background:#000;color:#fff;font:15px system-ui;display:grid;place-items:center;min-height:100vh;text-align:center;padding:16px"><div><b style="letter-spacing:.4em;font-weight:300">J.A.R.V.I.S.</b><p style="color:#999">Non raggiungo il computer su cui gira Jarvis.<br>Controlla che sia acceso e connesso.</p></div>`,
+        `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><body style="background:#000;color:#fff;font:15px system-ui;display:grid;place-items:center;min-height:100vh;text-align:center;padding:16px"><div><b style="letter-spacing:.4em;font-weight:300">J.A.R.V.I.S.</b><p style="color:#999;line-height:1.6">Non raggiungo il computer su cui gira Jarvis.</p><p style="color:#ccc;line-height:1.6;text-align:left;max-width:320px;margin:16px auto">1. Sul telefono apri <b>Tailscale</b> e controlla che sia <b>attivo</b>.<br>2. Sul computer Jarvis deve essere acceso (<code>npm start</code>).<br>3. Poi tocca il pulsante qui sotto.</p><button onclick="location.reload()" style="font:inherit;padding:12px 22px;background:#fff;color:#000;border:0;letter-spacing:.15em">RIPROVA</button></div>`,
         { headers: { "Content-Type": "text/html; charset=utf-8" } },
       )),
   );
