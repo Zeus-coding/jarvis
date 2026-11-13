@@ -280,7 +280,8 @@ function heard(raw, info = {}) {
   const key = normalize(text), words = key.split(" ").filter(Boolean);
   if (key === lastHandled.key && Date.now() - lastHandled.at < 4000) return;
   if (text.length < 3 || (words.length < 2 && !SHORT_ANSWERS.has(key) && !findWake(text))) return diag("dNote", `ignorato: "${text}"`);
-  if (info.confidence > 0 && info.confidence < 0.35 && words.length < 4) return diag("dNote", `poco chiaro: "${text}"`);
+  // su Android la "sicurezza" del riconoscimento è spesso bassa anche per frasi giuste: si scarta solo il rumore evidente
+  if (info.confidence > 0 && info.confidence < 0.15 && words.length < 3) return diag("dNote", `poco chiaro: "${text}"`);
   lastHandled = { key, at: Date.now() };
   $("#heard").textContent = text;
   $("#heard").classList.remove("live");

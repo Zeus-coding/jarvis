@@ -6,7 +6,9 @@ export let db, secrets = {};
 export async function loadData() {
   await mkdir(dataDir, { recursive: true });
   try { db = JSON.parse(await readFile(dbFile, "utf8")); } catch { db = {}; }
-  db.settings = { addressAs: "signore", ttsVoice: "it-IT-GiuseppeMultilingualNeural", ttsRate: "+4%", ttsPitch: "-3Hz", modelTier: "lite", reviewTime: "21:30", city: "", ...db.settings };
+  db.settings = { addressAs: "signore", ttsVoice: "it-IT-DiegoNeural", ttsRate: "+4%", ttsPitch: "-3Hz", modelTier: "lite", reviewTime: "21:30", city: "", ...db.settings };
+  // la voce "Giuseppe Multilingual" non viene più servita da Microsoft: chi l'aveva passa a Diego
+  if (db.settings.ttsVoice === "it-IT-GiuseppeMultilingualNeural") db.settings.ttsVoice = "it-IT-DiegoNeural";
   // ogni raccolta di dati parte vuota se non esiste ancora (così i file vecchi restano compatibili)
   for (const k of ["events", "memories", "dialog", "sessions", "contacts", "tasks", "reviews", "pushSubs", "notified"]) db[k] ??= [];
   db.profile ??= "";

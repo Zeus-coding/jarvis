@@ -18,7 +18,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 HERE = os.path.dirname(os.path.abspath(__file__))
 MODELS = os.path.join(os.environ.get("JARVIS_DATA_DIR") or os.path.join(HERE, "data"), "models")
 WHISPER_SIZE = os.environ.get("WHISPER_MODEL", "base")
-DEFAULT_VOICE = "it-IT-GiuseppeMultilingualNeural"
+DEFAULT_VOICE = "it-IT-DiegoNeural"
 
 # Whisper si carica in sottofondo: la voce funziona subito anche se il riconoscimento non è pronto o non c'è.
 whisper = {"model": None, "status": "in caricamento"}
@@ -61,17 +61,31 @@ async def speak(text: str, voice: str, rate: str, pitch: str) -> bytes:
     return bytes(chunks)
 
 
+# Voci italiane di riserva, in ordine di preferenza. Microsoft ogni tanto smette di servire una voce
+# (è successo con Giuseppe Multilingual): se quella scelta non risponde si passa alla successiva.
+FALLBACK_VOICES = ["it-IT-DiegoNeural", "it-IT-IsabellaNeural", "it-IT-ElsaNeural"]
+broken_voices: set[str] = set()
+
+
 def synthesize(text: str, voice: str, rate: str, pitch: str) -> bytes:
-    # il servizio Microsoft ogni tanto rifiuta una richiesta: un secondo tentativo, non di più (meglio non far aspettare)
+    candidates = [v for v in [voice, *FALLBACK_VOICES] if v not in broken_voices]
+    candidates = list(dict.fromkeys(candidates)) or FALLBACK_VOICES[:1]
     error: Exception | None = None
-    for attempt in range(2):
+    for name in candidates[:3]:
         try:
-            audio = asyncio.run(speak(text, voice, rate, pitch))
+            audio = asyncio.run(speak(text, name, rate, pitch))
             if audio:
                 return audio
+            raise RuntimeError("nessun audio generato")
         except Exception as exc:
             error = exc
-            time.sleep(0.3 * (attempt + 1))
+            # "No audio was received" = voce non servita: non si riprova più per questa sessione
+            if "No audio" in str(exc) or "nessun audio" in str(exc):
+                if name not in broken_voices:
+                    log(f"la voce {name} non risponde: passo a un'altra voce italiana")
+                broken_voices.add(name)
+            else:
+                time.sleep(0.3)  # errore di rete passeggero: si prova la voce successiva
     raise error or RuntimeError("nessun audio generato")
 
 
