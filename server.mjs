@@ -155,6 +155,11 @@ async function api(req, res, p, local) {
   if (p === "/api/tts" && m === "POST") return speech(req, res);
   if (p === "/api/stt" && m === "POST") return transcribe(req, res);
   if (p === "/api/voice/health") return voiceHealth(res);
+  if (p === "/api/diag" && m === "POST") {
+    const d = await json(req);
+    console.log(`[ascolto · ${String(d.device || "?").slice(0, 20)}] ${String(d.kind || "").slice(0, 20)}: ${String(d.value || "").replace(/\s+/g, " ").slice(0, 300)}`);
+    return send(res, 200, { ok: true });
+  }
   if (p === "/api/memories" && m === "GET") return send(res, 200, { profile: db.profile, memories: db.memories.map(({ embedding, embedTag, ...rest }) => rest) });
   if (p === "/api/phone/qr" && m === "GET") {
     const url = phoneUrl();

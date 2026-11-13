@@ -17,7 +17,7 @@ Chi ti chiede aiuto spesso non è un programmatore: parla in italiano, in modo s
 
 ## Cosa sa fare (per rispondere alle domande)
 - **Voce**: «Ciao Jarvis» lo sveglia e fa il saluto con gli impegni; poi basta parlare. Risponde dopo una pausa vera (circa 1,4 s; 2,4 s mentre si detta un messaggio; 2,6 s se la frase sembra a metà: `planTurn()` in `public/js/app.js`). Mentre parla non ascolta (anti-eco); «stop» o «basta» lo interrompono. Dopo 45 s di silenzio torna in attesa.
-- **Tasti** (computer): D diagnostica, T scrivi, W risveglio, R reset, J modalità registrazione (risponde solo se sente «Jarvis»), F schermo intero. Sul telefono i comandi stanno nella barra in basso.
+- **Tasti** (computer): D diagnostica, T scrivi, W risveglio, R reset, J «solo Jarvis», F schermo intero. Il pulsante **SOLO «JARVIS»** (anche sul telefono, ricordato sul dispositivo) fa rispondere solo alle frasi che contengono «Jarvis»: utile se nella stanza parlano altre persone o in classe. Sul telefono i comandi stanno nella barra in basso.
 - **Memoria**: profilo «Chi sei», ricordi fondamentali sempre presenti, diario delle conversazioni vecchie (riassunte oltre 60 messaggi), ricerca per significato con embeddings.
 - **Agenda**: calendario iCal collegato (solo lettura) + impegni aggiunti a voce.
 - **La mia giornata** (`/giornata`): riepilogo scritto dall'AI, meteo (città in CONFIGURA), agenda, attività con spunte, revisione serale con bozza dell'AI, bilancio settimanale con piano, lezioni recenti.
@@ -33,7 +33,7 @@ Chi ti chiede aiuto spesso non è un programmatore: parla in italiano, in modo s
 - **App installabile**: dal telefono, menu del browser → «Aggiungi a schermata Home». Le **notifiche** si attivano dalla pagina Giornata o in CONFIGURA (su iPhone solo dopo averla aggiunta alla Home).
 
 ## Problemi comuni
-- **Non sente**: serve Chrome o Edge, microfono consentito (lucchetto nella barra degli indirizzi) e `localhost` oppure HTTPS. Il tasto D mostra cosa sente.
+- **Non sente**: guarda il terminale di `npm start`: le righe `[ascolto · computer]` / `[ascolto · telefono Android]` mostrano browser, microfono, eventi del riconoscimento e frasi sentite. **Opera, Brave e Vivaldi non supportano il riconoscimento vocale** (Jarvis lo segnala): serve Edge o Chrome, microfono consentito (lucchetto nella barra degli indirizzi) e `localhost` oppure HTTPS. Il tasto D mostra cosa sente.
 - **Voce lenta o robotica**: se la voce gratuita è lenta, per 5 minuti parla il browser (con Edge è comunque naturale); in CONFIGURA si può scegliere sempre la voce del browser.
 - **Errore 429 / limite gratuito**: richieste Gemini finite per oggi (si azzerano a mezzanotte, ora del Pacifico) → aspettare, usare «Veloce» (Flash-Lite) o attivare la fatturazione.
 - **401/403**: chiave non valida → CONFIGURA. **Calendario non letto**: serve il link privato iCal (.ics).

@@ -111,6 +111,7 @@ body:not([data-mode="sleep"]) #hint { opacity: 0; }
 #dock button, #dock a { flex: none; display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 12px; background: rgba(0, 0, 0, 0.55); border: 1px solid var(--line); color: #fff; font: 500 9px "Inter", sans-serif; letter-spacing: 0.22em; text-decoration: none; cursor: pointer; backdrop-filter: blur(6px); }
 #dock button:hover, #dock a:hover { border-color: rgba(255, 255, 255, 0.5); }
 #dock small { display: none; }
+#dock button.on { border-color: #fff; background: rgba(255, 255, 255, 0.14); }
 #brainDot { width: 6px; height: 6px; border-radius: 50%; background: var(--err); }
 #brainDot.on { background: #fff; box-shadow: 0 0 8px #fff; }
 .desk { display: none !important; }

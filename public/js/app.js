@@ -14,7 +14,7 @@ const DESKTOP = matchMedia("(min-width: 900px) and (pointer: fine)").matches;
 
 // ---------------------------------------------------------------- stato
 const app = { settings: { addressAs: "signore" }, setup: {}, briefing: { lines: [], today: [], upcoming: [] }, memories: [], local: true };
-let mode = "boot", greeted = false, briefingDone = false, sleepAfterSpeech = false, recordingMode = false;
+let mode = "boot", greeted = false, briefingDone = false, sleepAfterSpeech = false, recordingMode = readSoloJarvis();
 let history = [], streamCtrl = null, lastSpoken = "", lastHandled = { key: "", at: 0 }, lastActivity = 0;
 let briefingAudio = null, pendingQuestion = null, thinkStart = 0, thinkBase = 0, party = false;
 
@@ -39,6 +39,14 @@ const GOODBYES = ["a dopo", "ci sentiamo dopo", "vai in pausa", "standby", "ripo
 const isGoodbye = (text) => { const n = normalize(text); return GOODBYES.some((g) => n.includes(g)); };
 const SHORT_ANSWERS = new Set(["si", "no", "ok", "okay", "certo", "esatto", "perfetto", "grazie", "conferma", "confermo", "annulla", "procedi", "continua", "stop", "basta", "vai"]);
 
+// «solo Jarvis»: risponde solo alle frasi con il suo nome (utile se parli con altri o sei in classe); ricordata su questo dispositivo
+function readSoloJarvis() { try { return localStorage.getItem("jarvis.soloJarvis") === "1"; } catch { return false; } }
+function setSoloJarvis(on) {
+  recordingMode = on;
+  try { localStorage.setItem("jarvis.soloJarvis", on ? "1" : "0"); } catch {}
+  const b = document.querySelector("#soloBtn");
+  if (b) { b.classList.toggle("on", on); b.textContent = on ? "SOLO «JARVIS» · SÌ" : "SOLO «JARVIS» · NO"; }
+}
 const orb = createScene($("#orb"), $("#labels"));
 const music = new Music(MUSIC);
 const say = (text, meta = {}) => { if (mode !== "speak" && mode !== "wake") setMode("speak"); speaker.say(text, meta); };
@@ -75,9 +83,14 @@ const listener = new Listener({
   },
   onLevel: (v) => { orb.setMic(mode === "sleep" || mode === "listen" ? v : 0); $("#micBar").style.transform = `scaleX(${Math.min(1, v * 1.4)})`; },
   onState: (s) => diag("dEngine", s),
+  onEvent: (e) => event(e),
   onError: (e) => {
     diag("dNote", e);
     if (/bloccato/.test(e)) { $("#hintText").textContent = "MICROFONO BLOCCATO · CONSENTILO DAL LUCCHETTO · OPPURE SCRIVI"; toast("Microfono bloccato: consentilo dalle impostazioni del sito (lucchetto)"); }
+    if (/senza riconoscimento/.test(e)) {
+      $("#hintText").textContent = "QUESTO BROWSER NON CAPISCE LA VOCE · APRI JARVIS CON EDGE O CHROME · OPPURE SCRIVI";
+      toast("Questo browser (es. Opera, Brave) non supporta il riconoscimento vocale: usa Microsoft Edge o Google Chrome");
+    }
   },
 });
 
@@ -102,7 +115,27 @@ function setMode(next) {
   else if (next === "sleep") { party = false; music.fade(MUSIC.after, 2); }
   else if (next === "paused") { party = false; music.stop(1.2); }
 }
-function diag(id, value) { const el = document.getElementById(id); if (el) el.textContent = value; }
+function diag(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+  report(id, value);
+}
+// diagnostica a distanza: microfono, motore di ascolto, frasi sentite ed errori finiscono anche nel terminale di Jarvis
+// (righe [ascolto]), così si può capire cosa non va senza vedere lo schermo del dispositivo
+const REPORTED = { dMic: "microfono", dEngine: "ascolto", dHeard: "sentito", dNote: "nota", dState: "stato" };
+const DEVICE = /Android/i.test(navigator.userAgent) ? "telefono Android" : /iPhone|iPad/i.test(navigator.userAgent) ? "iPhone" : "computer";
+let lastReport = {}, events = 0;
+// eventi del riconoscimento (avvio, stop, errori): i primi 60 di ogni pagina, per non riempire il terminale
+function event(text) {
+  if (++events > 60) return;
+  fetch("/api/diag", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ device: DEVICE, kind: "evento", value: text }), keepalive: true }).catch(() => {});
+}
+event(`pagina aperta · ${navigator.userAgent.replace(/^Mozilla\/5\.0 /, "").slice(0, 160)} · riconoscimento vocale ${"webkitSpeechRecognition" in window || "SpeechRecognition" in window ? "presente" : "ASSENTE"}`);
+function report(id, value) {
+  if (!REPORTED[id] || lastReport[id] === value) return;
+  lastReport[id] = value;
+  fetch("/api/diag", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ device: DEVICE, kind: REPORTED[id], value: String(value).slice(0, 300) }), keepalive: true }).catch(() => {});
+}
 function toast(text) {
   const el = $("#toast");
   el.textContent = text;
@@ -458,6 +491,13 @@ addEventListener("pointermove", () => {
 });
 $("#setupBtn").addEventListener("click", () => setup.open());
 $("#phoneBtn").addEventListener("click", () => setup.open("phone"));
+$("#soloBtn").addEventListener("click", () => {
+  setSoloJarvis(!recordingMode);
+  sfx.tick();
+  if (mode !== "boot") setMode(mode);
+  toast(recordingMode ? "Rispondo solo alle frasi con «Jarvis»" : "Rispondo a tutto quello che dici");
+});
+setSoloJarvis(recordingMode);
 $("#diagBtn").addEventListener("click", () => $("#diag").classList.toggle("show"));
 $("#typeBtn").addEventListener("click", () => { $("#typeBox").classList.toggle("show"); $("#typeBox input").focus(); });
 $("#fsBtn").addEventListener("click", () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()));
@@ -490,7 +530,7 @@ addEventListener("keydown", (e) => {
   if (k === "w" && mode === "sleep") wake("");
   if (k === "t") { e.preventDefault(); $("#typeBtn").click(); }
   if (k === "escape") $("#typeBox").classList.remove("show");
-  if (k === "j") { recordingMode = !recordingMode; sfx.tick(); setMode(mode); toast(recordingMode ? "Modalità registrazione: risponde solo se senti «Jarvis»" : "Modalità registrazione disattivata"); }
+  if (k === "j") $("#soloBtn").click();
   if (k === "r") { greeted = briefingDone = false; music.stop(1); history = []; $("#stats").replaceChildren(); goSleep(); } // reset completo della scena
 });
 

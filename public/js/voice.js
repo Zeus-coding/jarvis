@@ -4,6 +4,8 @@ const out = audioCtx.createGain();
 out.connect(audioCtx.destination);
 const ANDROID = /Android/i.test(navigator.userAgent);
 const PHONE = ANDROID || /iPhone|iPad|iPod/i.test(navigator.userAgent);
+// Browser che hanno l'oggetto del riconoscimento vocale ma non lo fanno funzionare (non hanno accesso al servizio di Google)
+export const VOICE_UNSUPPORTED = /OPR\/|Opera|Vivaldi|YaBrowser/i.test(navigator.userAgent) || Boolean(navigator.brave);
 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 // ======================================================================== Speaker
@@ -115,15 +117,16 @@ export class Speaker {
 // i risultati arrivano marcati come echo e l'app li usa solo per capire un "stop".
 // Senza riconoscimento del browser usa Whisper sul server (se installato) registrando a blocchi.
 export class Listener {
-  constructor({ onFinal, onInterim, onLevel, onState, onError } = {}) {
-    Object.assign(this, { onFinal, onInterim, onLevel, onState, onError });
+  constructor({ onFinal, onInterim, onLevel, onState, onError, onEvent } = {}) {
+    Object.assign(this, { onFinal, onInterim, onLevel, onState, onError, onEvent });
     this.muted = false;
     this.paused = false;
     this.engine = null;
     this.label = "";
   }
   async start() {
-    const useBrowser = SpeechRec && new URLSearchParams(location.search).get("stt") !== "whisper";
+    if (SpeechRec && VOICE_UNSUPPORTED) this.onError?.("browser senza riconoscimento vocale");
+    const useBrowser = SpeechRec && !VOICE_UNSUPPORTED && new URLSearchParams(location.search).get("stt") !== "whisper";
     // Sui telefoni il microfono non si può condividere: se lo apriamo noi per misurare il volume,
     // il riconoscimento vocale del sistema non riceve l'audio ("sente" ma non capisce). Lì lo lasciamo tutto a lui
     // e la barra del volume si anima con i segnali del riconoscimento.
@@ -173,11 +176,14 @@ export class Listener {
   #browser() {
     this.engine = "browser";
     let failures = 0;
+    // se dopo 5 secondi il riconoscimento non si è mai avviato, il browser non lo supporta davvero
+    let everStarted = false;
+    setTimeout(() => { if (!everStarted && this.engine === "browser" && !this.blocked) this.onError?.("browser senza riconoscimento vocale"); }, 5000);
     const rec = (this.rec = new SpeechRec());
     rec.lang = "it-IT";
     rec.continuous = !ANDROID; // su Android la modalità continua ripete le parole: frase per frase (l'app le riunisce)
     rec.interimResults = true;
-    rec.onstart = () => { this.running = true; this.onState?.(this.muted ? "ANTI-ECO" : "IN ASCOLTO"); };
+    rec.onstart = () => { everStarted = true; this.running = true; this.onEvent?.("riconoscimento avviato"); this.onState?.(this.muted ? "ANTI-ECO" : "IN ASCOLTO"); };
     rec.onspeechstart = rec.onsoundstart = () => { this.hearing = true; };
     rec.onspeechend = rec.onsoundend = () => { this.hearing = false; };
     rec.onresult = (e) => {
@@ -191,6 +197,7 @@ export class Listener {
       if (interim.trim()) this.onInterim?.(interim.trim(), { echo: this.muted });
     };
     rec.onerror = (e) => {
+      this.onEvent?.(`errore riconoscimento: ${e.error}${e.message ? ` (${e.message})` : ""}`);
       if (e.error === "no-speech" || e.error === "aborted") return;
       if (e.error === "not-allowed") { this.blocked = true; this.onError?.("microfono bloccato"); return; }
       this.onError?.(`riconoscimento vocale: ${e.error}`);
@@ -200,13 +207,14 @@ export class Listener {
       }
     };
     rec.onend = () => {
+      this.onEvent?.("riconoscimento fermato");
       this.running = false;
       this.hearing = false;
       if (this.rec === rec && !this.paused && !this.blocked) setTimeout(() => this.#restart(), 150);
     };
     this.#restart();
   }
-  #restart() { if (this.rec && !this.running && !this.paused) try { this.rec.start(); } catch {} }
+  #restart() { if (this.rec && !this.running && !this.paused) try { this.rec.start(); } catch (e) { this.onEvent?.(`avvio riconoscimento non riuscito: ${e.message}`); } }
 
   // Rilevatore di voce a tempo: impara il rumore di fondo, inizia a registrare quando il volume lo supera
   // per almeno 90 ms e si ferma dopo 0,8 secondi di silenzio (o dopo 15 secondi). Poi manda il pezzo a Whisper.
