@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="J.A.R.V.I.S. — assistente vocale personale con memoria, agenda e modalità lezione">
+  <title>J.A.R.V.I.S.</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/css/hud.css">
+  <script type="importmap">
+    { "imports": { "three": "/node_modules/three/build/three.module.js", "three/addons/": "/node_modules/three/examples/jsm/" } }
+  </script>
+</head>
+<body data-mode="boot">
+  <canvas id="orb" aria-hidden="true"></canvas>
+  <div id="labels" aria-hidden="true"></div>
+  <div class="fx vignette"></div><div class="fx grain"></div><div class="fx scanlines"></div>
+
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="15" /><circle cx="20" cy="20" r="9" /><circle cx="20" cy="20" r="2.4" class="dot" /></svg>
+      <div><b>J.A.R.V.I.S.</b><small>PERSONAL COGNITIVE SYSTEM</small></div>
+    </div>
+    <div class="status"><i></i><span id="status">AVVIO</span></div>
+    <div class="clock"><b id="clock">--:--</b><small id="date"></small></div>
+  </header>
+
+  <section id="stats" aria-live="polite"></section>
+
+  <aside id="agendaPanel">
+    <h3><span>AGENDA</span><em>PROSSIMI</em></h3>
+    <ol id="agenda"></ol>
+  </aside>
+
+  <div id="thinking" aria-hidden="true">
+    <span id="thinkLabel">ANALISI</span>
+    <div><b id="synapses">0</b><small>SINAPSI<br>ATTIVATE</small><em id="thinkTime">0.0s</em></div>
+  </div>
+
+  <div id="caption" aria-live="polite">
+    <p id="heard"></p>
+    <p id="spoken"></p>
+  </div>
+
+  <div id="hint"><span id="hintText">DÌ</span><b>«CIAO JARVIS»</b><div class="mic"><i id="micBar"></i></div></div>
+
+  <div id="gate" role="button" tabindex="0">
+    <div class="ring"></div>
+    <b>J.A.R.V.I.S.</b>
+    <span id="gateText">TOCCA PER INIZIARE</span>
+    <small>Attiva microfono e audio</small>
+  </div>
+
+  <nav id="dock" aria-label="Comandi">
+    <button id="setupBtn" type="button"><i id="brainDot"></i>CONFIGURA</button>
+    <a href="/giornata">GIORNATA</a>
+    <a href="/lezione">LEZIONE</a>
+    <button id="phoneBtn" type="button" class="desk">TELEFONO · QR</button>
+    <button id="typeBtn" type="button">SCRIVI</button>
+    <button id="pauseBtn" type="button">PAUSA</button>
+    <button id="diagBtn" type="button" class="phone-only">DIAGNOSTICA</button>
+    <button id="fsBtn" type="button" class="desk">SCHERMO INTERO</button>
+    <small class="desk">D diagnostica · T scrivi · W risveglia · R reset · J registrazione</small>
+  </nav>
+
+  <form id="typeBox"><input placeholder="Scrivi a Jarvis e premi Invio…" autocomplete="off" enterkeyhint="send"></form>
+
+  <div id="action" class="action" role="dialog" aria-live="polite">
+    <span class="kind" id="actionKind"></span>
+    <b id="actionTitle"></b>
+    <p id="actionDetail"></p>
+    <textarea id="actionText" rows="3" aria-label="Testo del messaggio, modificabile"></textarea>
+    <div class="row">
+      <button type="button" id="actionCancel" class="ghost">ANNULLA</button>
+      <a id="actionGo" class="go" target="_blank" rel="noopener"></a>
+    </div>
+  </div>
+
+  <aside id="diag" aria-label="Diagnostica">
+    <b>DIAGNOSTICA</b>
+    <dl>
+      <dt>STATO</dt><dd id="dState">—</dd>
+      <dt>MICROFONO</dt><dd id="dMic">—</dd>
+      <dt>ASCOLTO</dt><dd id="dEngine">—</dd>
+      <dt>VOCE</dt><dd id="dVoice">—</dd>
+      <dt>MENTE</dt><dd id="dMind">—</dd>
+      <dt>SENTITO</dt><dd id="dHeard">—</dd>
+      <dt>NOTE</dt><dd id="dNote">—</dd>
+    </dl>
+  </aside>
+
+  <div id="toast" role="status"></div>
+
+  <!-- configurazione -->
+  <div id="setup" class="setup">
+    <form class="sheet" id="setupForm" autocomplete="off">
+      <span class="kicker">CONFIGURAZIONE</span>
+      <h2>Attiviamo J.A.R.V.I.S.</h2>
+
+      <section class="step">
+        <h3><b>01</b>Cervello AI <em>obbligatorio</em></h3>
+        <p>Google Gemini ha un piano gratuito. OpenAI è l'alternativa a pagamento.</p>
+        <div class="choice"><label><input type="radio" name="brain" value="gemini" checked> Google Gemini</label><label><input type="radio" name="brain" value="openai"> OpenAI</label></div>
+        <div class="only-gemini">
+          <div class="field"><input id="geminiKey" type="password" placeholder="AIza..." spellcheck="false"><a class="btn" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">OTTIENI LA CHIAVE ↗</a></div>
+          <small class="state" id="geminiState"></small>
+          <div class="choice"><label><input type="radio" name="tier" value="lite" checked> Veloce · più richieste gratis</label><label><input type="radio" name="tier" value="flash"> Più intelligente · poche richieste gratis</label></div>
+          <details><summary>È davvero gratis?</summary><p>Il piano gratuito ha un limite di richieste al giorno, visibile in Google AI Studio. Sul piano gratuito Google può usare le conversazioni per migliorare i suoi servizi; con la fatturazione attiva no. L'abbonamento all'app Gemini non vale per le API.</p></details>
+        </div>
+        <div class="only-openai">
+          <div class="field"><input id="openaiKey" type="password" placeholder="sk-..." spellcheck="false"><a class="btn" href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">OTTIENI LA CHIAVE ↗</a></div>
+          <small class="state" id="openaiState"></small>
+        </div>
+      </section>
+
+      <section class="step">
+        <h3><b>02</b>Voce <em>facoltativo</em></h3>
+        <div class="choice"><label><input type="radio" name="voice" value="free" checked> Neurale gratuita</label><label><input type="radio" name="voice" value="browser"> Del browser · la più veloce</label><label><input type="radio" name="voice" value="eleven"> ElevenLabs</label></div>
+        <div class="field only-eleven"><input id="elevenKey" type="password" placeholder="Chiave ElevenLabs" spellcheck="false"><a class="btn" href="https://elevenlabs.io/app/settings/api-keys" target="_blank" rel="noopener">OTTIENI ↗</a></div>
+        <small class="state" id="elevenState"></small>
+      </section>
+
+      <section class="step">
+        <h3><b>03</b>Calendario <em>facoltativo</em></h3>
+        <div class="field"><input id="calendarUrl" type="password" placeholder="Link iCal privato (.ics)" spellcheck="false"></div>
+        <small class="state" id="calendarState"></small>
+        <details><summary>Dove trovo il link?</summary>
+          <p><b>Google Calendar</b> (da computer): Impostazioni → il tuo calendario → <b>Indirizzo segreto in formato iCal</b>.</p>
+          <p><b>iCloud</b>: Calendario → condividi → calendario pubblico (link webcal://). <b>Outlook</b>: Impostazioni → Calendari condivisi → Pubblica → link ICS.</p>
+        </details>
+      </section>
+
+      <section class="step">
+        <h3><b>04</b>Chi sei <em>consigliato</em></h3>
+        <div class="field"><input id="addressAs" type="text" placeholder="Come vuoi che ti chiami? (es. signore, capo, Paolo)"></div>
+        <div class="field"><input id="city" type="text" placeholder="La tua città (per il meteo della giornata)"></div>
+        <div class="field"><textarea id="profile" rows="4" placeholder="Raccontagli di te: studi, lavoro, obiettivi, persone importanti, profili social…"></textarea></div>
+        <small class="state" id="profileState"></small>
+      </section>
+
+      <section class="step">
+        <h3><b>05</b>Telefono e notifiche <em>facoltativo</em></h3>
+        <div class="field"><input id="accessPassword" type="password" placeholder="Password per gli altri dispositivi (almeno 8 caratteri)" autocomplete="new-password"></div>
+        <small class="state" id="passwordState"></small>
+        <div class="choice"><label id="tunnelLabel"><input type="checkbox" id="phoneTunnel"> Indirizzo per il telefono (gratis, il PC resta acceso)</label></div>
+        <div class="phone" id="phoneBox">
+          <img id="phoneQr" alt="QR code per aprire Jarvis dal telefono">
+          <div><a id="phoneUrl" target="_blank" rel="noopener"></a><button type="button" class="btn" id="phoneCopy">COPIA LINK</button><small>Inquadra il QR con il telefono. L'indirizzo cambia quando riavvii Jarvis: lo ritrovi sempre qui.</small></div>
+        </div>
+        <small class="state" id="tunnelState"></small>
+        <div class="choice"><label><input type="checkbox" id="notify"> Notifiche su questo dispositivo (impegni, revisione serale)</label></div>
+        <div class="field inline"><span>Revisione serale alle</span><input id="reviewTime" type="time" value="21:30"></div>
+        <small class="state" id="notifyState"></small>
+      </section>
+
+      <section class="step">
+        <h3><b>06</b>Contatti <em>facoltativo</em></h3>
+        <p>Per «scrivi alla mamma che arrivo tra mezz'ora». I numeri restano sul tuo computer: all'AI arrivano solo i nomi.</p>
+        <div class="choice tools">
+          <button type="button" class="btn" id="contactPick">IMPORTA DAL TELEFONO</button>
+          <label class="btn">IMPORTA FILE .VCF<input type="file" id="contactFile" accept=".vcf,text/vcard,text/x-vcard" hidden></label>
+          <input id="contactFilter" type="search" placeholder="Cerca…">
+        </div>
+        <ul class="contacts" id="contacts"></ul>
+        <div class="field"><input id="contactName" placeholder="Nome"><input id="contactPhone" type="tel" placeholder="Numero"><button type="button" class="btn" id="contactAdd">AGGIUNGI</button></div>
+        <small class="state" id="contactState"></small>
+      </section>
+
+      <p class="error" id="setupError"></p>
+      <div class="row">
+        <button type="button" id="setupClose" class="ghost">CHIUDI</button>
+        <button type="submit" id="setupSave" class="primary">SALVA</button>
+      </div>
+    </form>
+  </div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

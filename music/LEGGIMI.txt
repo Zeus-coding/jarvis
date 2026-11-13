@@ -1,0 +1,8 @@
+Colonna sonora facoltativa di J.A.R.V.I.S.
+
+Copia qui un file MP3 e chiamalo theme.mp3: partirà al risveglio ("Ciao Jarvis"),
+si abbasserà quando Jarvis parla e resterà in sottofondo.
+Volumi e secondo di partenza: public/js/replies.js → MUSIC.
+
+Usa solo musica di cui hai i diritti, soprattutto se pubblichi video.
+Il file non viene caricato su GitHub (vedi .gitignore).

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <title>La mia giornata · J.A.R.V.I.S.</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/css/day.css">
+</head>
+<body>
+  <header>
+    <a class="back" href="/">← JARVIS</a>
+    <b>LA MIA GIORNATA</b>
+    <span class="grow"></span>
+    <a class="back" href="/lezione">LEZIONE →</a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <h1 id="hello">Buongiorno</h1>
+        <p id="today"></p>
+      </div>
+      <div class="weather" id="weather" hidden>
+        <span id="wIcon"></span>
+        <div><b id="wTemp"></b><small id="wDesc"></small></div>
+      </div>
+    </section>
+
+    <div class="banner" id="notifyBanner" hidden>
+      <span>Vuoi che ti avvisi prima degli impegni e all'ora della revisione serale?</span>
+      <button type="button" id="notifyOn" class="primary">ATTIVA NOTIFICHE</button>
+    </div>
+
+    <section class="card wide" id="summaryCard">
+      <h2><span>✳ RIEPILOGO</span><button type="button" id="summaryBtn" class="link">AGGIORNA</button></h2>
+      <p id="summary" class="summary">Sto preparando il riepilogo…</p>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2><span>CALENDARIO</span><em id="agendaCount"></em></h2>
+        <h3>Oggi</h3>
+        <ul class="events" id="eventsToday"></ul>
+        <h3>Domani</h3>
+        <ul class="events" id="eventsTomorrow"></ul>
+      </section>
+
+      <section class="card">
+        <h2><span>ATTIVITÀ</span><em id="taskCount"></em></h2>
+        <form class="add" id="taskForm">
+          <input id="taskTitle" placeholder="Cosa devi fare?" autocomplete="off" enterkeyhint="done">
+          <input id="taskDue" type="date" aria-label="Scadenza (facoltativa)">
+          <button type="submit" aria-label="Aggiungi">+</button>
+        </form>
+        <ul class="tasks" id="tasks"></ul>
+        <p class="hint">Puoi anche dirlo a Jarvis: «aggiungi alle cose da fare studiare il capitolo 3», «ho finito la relazione».</p>
+      </section>
+
+      <section class="card" id="revisione">
+        <h2><span>REVISIONE SERALE</span><em id="reviewWhen"></em></h2>
+        <form id="reviewForm">
+          <label>Cosa è andato bene<textarea id="rGood" rows="2"></textarea></label>
+          <label>Cosa no<textarea id="rBad" rows="2"></textarea></label>
+          <label>Per domani<textarea id="rNotes" rows="2"></textarea></label>
+          <div class="mood" id="mood" role="radiogroup" aria-label="Com'è andata, da 1 a 5">
+            <span>Com'è andata?</span>
+            <button type="button" data-v="1">1</button><button type="button" data-v="2">2</button><button type="button" data-v="3">3</button><button type="button" data-v="4">4</button><button type="button" data-v="5">5</button>
+          </div>
+          <div class="row">
+            <button type="button" id="draftBtn" class="ghost">✳ BOZZA DI JARVIS</button>
+            <button type="submit" class="primary" id="reviewSave">SALVA</button>
+          </div>
+          <p class="state" id="reviewState"></p>
+        </form>
+      </section>
+
+      <section class="card" id="settimana">
+        <h2><span>LA SETTIMANA</span><button type="button" id="weekBtn" class="link">GENERA BILANCIO</button></h2>
+        <div id="week"><p class="hint">Ogni domenica sera Jarvis tira le somme della settimana dalle tue revisioni e attività. Puoi anche generarlo ora.</p></div>
+      </section>
+
+      <section class="card">
+        <h2><span>LEZIONI</span><a class="link" href="/lezione">TUTTE →</a></h2>
+        <ul class="lessons" id="lessons"></ul>
+      </section>
+    </div>
+  </main>
+
+  <div id="toast" role="status"></div>
+  <script type="module" src="/js/giornata.js"></script>
+</body>
+</html>

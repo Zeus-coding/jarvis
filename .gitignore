@@ -1,0 +1,11 @@
+node_modules/
+.venv/
+__pycache__/
+*.log
+*.tmp
+
+# dati personali: chiavi, password, ricordi, contatti, lezioni (mai su GitHub)
+data/
+
+# musica di sottofondo: ognuno mette la propria (diritti d'autore)
+music/*.mp3

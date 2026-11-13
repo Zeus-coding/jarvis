@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#000">
+  <title>Modalità Lezione · J.A.R.V.I.S.</title>
+  <style>
+    @font-face { font-family: "Inter"; src: url("/fonts/inter-latin.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+    :root { --bg: #000; --panel: #070707; --line: rgba(255,255,255,.14); --dim: rgba(255,255,255,.5); --text: #fff; --accent: #8fd3ff; --err: #ff8a8a; --mono: ui-monospace, "SFMono-Regular", Consolas, monospace; color-scheme: dark; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font: 300 15px/1.55 "Inter", system-ui, sans-serif; min-height: 100vh; }
+    button, input { font: inherit; }
+    a.btn { font-family: inherit; font-weight: inherit; }
+    header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: rgba(0,0,0,.9); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+    header a.home { color: var(--dim); text-decoration: none; font-size: 11px; letter-spacing: .2em; }
+    header b { font-weight: 400; letter-spacing: .32em; font-size: 12px; }
+    header .grow { flex: 1; }
+    .pill { display: inline-flex; align-items: center; gap: 7px; font-size: 10px; letter-spacing: .22em; color: var(--dim); }
+    .pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
+    .pill.live i { background: #ff4d4d; box-shadow: 0 0 10px #ff4d4d; animation: blink 1.4s infinite; }
+    .pill.busy i { background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: blink .7s infinite; }
+    @keyframes blink { 50% { opacity: .3; } }
+    .btn, button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 0 14px; background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.3); font-size: 10px; letter-spacing: .2em; text-decoration: none; cursor: pointer; white-space: nowrap; }
+    .btn:hover, button:hover { border-color: #fff; }
+    .primary { background: #fff; color: #000; border-color: #fff; }
+    .danger { color: var(--err); border-color: rgba(255,138,138,.4); }
+    button:disabled { opacity: .45; cursor: default; }
+    main { max-width: 1280px; margin: 0 auto; padding: 20px 16px 120px; }
+    /* elenco */
+    #list h1 { font-weight: 200; font-size: 30px; margin: 10px 0 6px; }
+    #list p.lead { color: rgba(255,255,255,.7); max-width: 640px; }
+    .new { display: flex; gap: 8px; margin: 22px 0 8px; flex-wrap: wrap; }
+    .new input { flex: 1; min-width: 220px; background: #000; border: 1px solid rgba(255,255,255,.25); color: #fff; padding: 11px 12px; outline: none; }
+    .new input:focus { border-color: rgba(255,255,255,.6); }
+    .hint { font-size: 12px; color: var(--dim); margin-top: 6px; }
+    .warn { color: var(--err); font-size: 13px; margin-top: 10px; min-height: 1em; }
+    #lessons { margin-top: 28px; border-top: 1px solid var(--line); }
+    .row { display: flex; align-items: center; gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+    .row .info { flex: 1; min-width: 200px; }
+    .row .info b { font-weight: 500; }
+    .row .info small { display: block; color: var(--dim); font-size: 12px; }
+    .tag { font-size: 9px; letter-spacing: .2em; padding: 3px 7px; border: 1px solid #ff4d4d; color: #ff8080; margin-left: 6px; vertical-align: 2px; }
+    /* lezione */
+    #lesson { display: none; }
+    body.in-lesson #list { display: none; }
+    body.in-lesson #lesson { display: block; }
+    .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+    .bar h2 { flex: 1; min-width: 200px; font-weight: 300; font-size: 22px; }
+    .grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 22px; align-items: start; }
+    .card { background: var(--panel); border: 1px solid var(--line); }
+    .card > h3 { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); font-weight: 400; font-size: 10px; letter-spacing: .3em; color: var(--dim); }
+    #notesCard { min-height: 60vh; }
+    #notes { padding: 6px 22px 26px; font-size: 15.5px; }
+    #notes:empty::before { content: "Gli appunti compariranno qui dopo il primo minuto di lezione: Jarvis aspetta di avere abbastanza materiale."; display: block; padding: 22px 0; color: var(--dim); }
+    #notes h1 { font-size: 26px; font-weight: 300; margin: 18px 0 8px; }
+    #notes h2 { font-size: 19px; font-weight: 500; margin: 22px 0 6px; padding-top: 10px; border-top: 1px solid var(--line); }
+    #notes h3 { font-size: 15.5px; font-weight: 600; margin: 14px 0 4px; color: var(--accent); }
+    #notes p { margin: 6px 0; }
+    #notes ul, #notes ol { margin: 6px 0 6px 22px; }
+    #notes li { margin: 3px 0; }
+    #notes li.d1 { margin-left: 20px; } #notes li.d2 { margin-left: 40px; } #notes li.d3 { margin-left: 60px; }
+    #notes strong { font-weight: 600; color: #fff; }
+    #notes code, #notes pre { font-family: var(--mono); font-size: 13px; background: #111; }
+    #notes pre { padding: 10px; overflow-x: auto; margin: 8px 0; }
+    #notes blockquote { border-left: 2px solid var(--accent); padding-left: 12px; color: rgba(255,255,255,.75); margin: 8px 0; }
+    #notes table { border-collapse: collapse; margin: 10px 0; display: block; overflow-x: auto; max-width: 100%; }
+    #notes th, #notes td { border: 1px solid var(--line); padding: 5px 9px; text-align: left; font-size: 14px; }
+    #notes th { background: #111; font-weight: 500; }
+    #notes hr { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }
+    #notes figure { margin: 14px 0; }
+    #notes figcaption { font-size: 12px; letter-spacing: .08em; color: var(--dim); margin-bottom: 6px; }
+    #notes svg { max-width: 100%; height: auto; display: block; }
+    #notes .flash { animation: glow 2.4s ease-out; }
+    @keyframes glow { from { background: rgba(143,211,255,.12); } to { background: transparent; } }
+    .side { display: grid; gap: 22px; position: sticky; top: 78px; }
+    #camBox { position: relative; background: #000; aspect-ratio: 4 / 3; display: none; }
+    body.recorder #camBox { display: block; }
+    #cam { width: 100%; height: 100%; object-fit: cover; display: block; }
+    #camBox .shot { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+    #camBox .shot.go { animation: shot .5s ease-out; }
+    @keyframes shot { from { opacity: .8; } to { opacity: 0; } }
+    #camMsg { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px; font-size: 12px; color: var(--dim); }
+    .recbar { display: none; gap: 8px; padding: 10px; flex-wrap: wrap; }
+    body.recorder .recbar { display: flex; }
+    #transcript { max-height: 38vh; overflow-y: auto; padding: 10px 14px; font-size: 13px; color: rgba(255,255,255,.75); }
+    #transcript p { margin: 4px 0; }
+    #transcript p time { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-right: 6px; }
+    #interim { color: var(--dim); font-style: italic; }
+    #photos { display: flex; gap: 6px; overflow-x: auto; padding: 10px; }
+    #photos:empty::before { content: "Nessuna foto"; font-size: 12px; color: var(--dim); }
+    #photos a img { height: 64px; display: block; border: 1px solid var(--line); }
+    #status { font-size: 12px; color: var(--dim); min-height: 1.2em; margin-bottom: 10px; }
+    #status.err { color: var(--err); }
+    .tabs { display: none; }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .side { position: static; }
+      .tabs { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: rgba(0,0,0,.95); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
+      .tabs button { flex: 1; border: 0; min-height: 54px; color: var(--dim); }
+      .tabs button.on { color: #fff; box-shadow: inset 0 2px 0 #fff; }
+      body[data-tab="notes"] .side { display: none; }
+      body[data-tab="live"] #notesCard { display: none; }
+      #notes { padding: 4px 16px 20px; }
+      main { padding-bottom: 90px; }
+    }
+  </style>
+</head>
+<body data-tab="notes">
+  <header>
+    <a class="home" href="/">← JARVIS</a>
+    <b>MODALITÀ LEZIONE</b>
+    <span class="grow"></span>
+    <span class="pill" id="pill"><i></i><span id="pillText">PRONTO</span></span>
+  </header>
+
+  <main>
+    <section id="list">
+      <h1>Lezioni</h1>
+      <p class="lead">Metti il telefono in modo che la fotocamera posteriore inquadri la lavagna o le slide. Jarvis trascrive quello che dice il professore, fotografa la lavagna quando cambia e scrive gli appunti ordinati in tempo reale. Puoi seguirli anche dal computer.</p>
+      <form class="new" id="newForm">
+        <input id="title" placeholder="Materia o argomento (es. Architettura dei calcolatori)" maxlength="120" autocomplete="off">
+        <button class="primary" type="submit">AVVIA DA QUESTO DISPOSITIVO</button>
+      </form>
+      <p class="hint">Tieni lo schermo acceso e la pagina aperta: se blocchi il telefono la trascrizione si ferma. Prima di registrare, controlla le regole della tua università e chiedi al professore se serve.</p>
+      <p class="warn" id="listWarn"></p>
+      <div id="lessons"></div>
+    </section>
+
+    <section id="lesson">
+      <div class="bar">
+        <h2 id="lessonTitle"></h2>
+        <button id="updateBtn" title="Aggiorna adesso gli appunti">AGGIORNA APPUNTI</button>
+        <a class="btn" id="wordBtn" href="#">SCARICA WORD</a>
+        <button class="danger" id="endBtn">TERMINA LEZIONE</button>
+      </div>
+      <p id="status"></p>
+      <div class="grid">
+        <article class="card" id="notesCard"><h3><span>APPUNTI</span><span id="updatedAt"></span></h3><div id="notes"></div></article>
+        <aside class="side">
+          <div class="card">
+            <div id="camBox"><video id="cam" playsinline muted autoplay></video><div id="camMsg"></div><div class="shot" id="shot"></div></div>
+            <div class="recbar">
+              <button id="photoBtn">FOTO ORA</button>
+              <button id="autoBtn">FOTO AUTOMATICHE: SÌ</button>
+              <button id="pauseBtn">PAUSA</button>
+            </div>
+          </div>
+          <div class="card"><h3><span>TRASCRIZIONE</span><span id="words"></span></h3><div id="transcript"><p id="interim"></p></div></div>
+          <div class="card"><h3><span>LAVAGNA</span></h3><div id="photos"></div></div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="notes" class="on">APPUNTI</button>
+    <button data-tab="live">DIRETTA</button>
+  </nav>
+
+  <script type="module" src="/js/lezione.js"></script>
+</body>
+</html>

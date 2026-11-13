@@ -1,0 +1,23 @@
+{
+  "name": "jarvis",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal voice assistant with long-term memory, agenda, lecture mode and daily reviews (Node.js, Gemini, PWA)",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "setup": "node setup.mjs",
+    "start": "node server.mjs",
+    "start:lan": "node server.mjs --lan",
+    "test": "node --test \"test/**/*.test.mjs\"",
+    "check": "node scripts/check.mjs"
+  },
+  "dependencies": {
+    "qrcode-generator": "1.4.4",
+    "three": "0.180.0",
+    "web-push": "3.6.7"
+  },
+  "license": "MIT"
+}

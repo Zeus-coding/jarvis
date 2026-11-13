@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - name: Controllo sintassi
+        run: npm run check
+      - name: Test automatici
+        run: npm test
+      - name: Il server si avvia
+        run: |
+          JARVIS_DATA_DIR=$(mktemp -d) PORT=4199 node server.mjs &
+          for i in $(seq 1 20); do curl -sf http://127.0.0.1:4199/api/setup > /dev/null && exit 0; sleep 1; done
+          exit 1
