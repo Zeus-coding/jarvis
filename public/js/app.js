@@ -462,7 +462,7 @@ async function boot() {
   } catch {
     // server spento o in riavvio: si riprova da soli ogni 3 secondi, finché risponde
     diag("dNote", "server non raggiungibile");
-    $("#gateText").textContent = "JARVIS NON RAGGIUNGIBILE · RIPROVO…";
+    $("#gateText").textContent = DEVICE === "computer" ? "JARVIS NON RAGGIUNGIBILE · RIPROVO…" : "NON TROVO IL COMPUTER · ACCENDI TAILSCALE SUL TELEFONO · RIPROVO…";
     setTimeout(boot, 3000);
     return;
   }
